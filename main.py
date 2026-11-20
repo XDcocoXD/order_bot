@@ -51,22 +51,16 @@ def remove_tag(text, tag):
 async def main():
     async with bot:
         me = await bot.get_me()
-
         tag = f'@{me.username}'.lower()
-        mentions = []
-        offset = None
+        updates = await bot.get_updates(timeout=0)
 
         while True:
-            updates = await bot.get_updates(offset=offset)
             for update in updates:
-                offset = update.update_id + 1
                 msg = update.message
-                deadline = msg.date + timedelta(days=3)
-                if not msg or not msg.entities:
+                if not msg or not msg.entities or msg.text:
                     continue
                 for e in msg.entities:
                     if e.type == "mention" and msg.parse_entity(e).lower() == tag:
-                        mentions.append(msg)
                         alr = add_order(
                             remove_tag(msg.text,tag),
                             msg.date,
@@ -74,12 +68,13 @@ async def main():
                             find_title(msg.chat.title),
                         ),
                         if alr:
+                            deadline = msg.date + timedelta(days=3)
                             await msg.reply_text(f'Замовлення прийняте та буде доставлене Максимом до {deadline.strftime("%d.%m")} включно')
                         else:
                             await msg.reply_text("Не працює база, зверніться будь ласка до Максима")
-                        print(f"@{msg.from_user.username}, {msg.date}, {msg.text}, {msg.chat.title}")
                         break
-            await asyncio.sleep(10)
+            if updates:
+                await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
 
 
 
