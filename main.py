@@ -57,10 +57,8 @@ def remove_tag(text, tag):
 async def main():
     async with bot:
        me = await bot.get_me()
-        print("Бот підключено:", me.username)
         tag = f"@{me.username}".lower()
         updates = await bot.get_updates(timeout=0)
-        print("Нових оновлень:", len(updates))
 
         for update in updates:
             msg = update.message
