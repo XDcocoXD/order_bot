@@ -54,7 +54,6 @@ async def main():
         tag = f'@{me.username}'.lower()
         updates = await bot.get_updates(timeout=0)
 
-        while True:
             for update in updates:
                 msg = update.message
                 if not msg or not msg.entities or msg.text:
