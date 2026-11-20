@@ -1,9 +1,9 @@
 name: order-bot
 
 on:
-  schedule:
-    - cron: "3,18,33,48 * * * *"
   workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
 
 concurrency:
   group: order-bot
