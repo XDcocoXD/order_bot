@@ -77,7 +77,7 @@ async def main():
                     if ok:
                         deadline = msg.date + timedelta(days=3)
                         await msg.reply_text(
-                            f'Замовлення прийняте та буде доставлене Максимом до {deadline.strftime("%d.%m")} включно'
+                            f'Замовлення: \n {msg.text}\n  Буде доставлене Максимом до {deadline.strftime("%d.%m")} включно'
                         )
                     else:
                         await msg.reply_text("Не працює база, зверніться будь ласка до Максима")
