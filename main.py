@@ -10,6 +10,7 @@ from telegram import Bot
 load_dotenv(".env")
 request = HTTPXRequest(connect_timeout=30, read_timeout=30)
 bot = Bot(token=os.getenv("TELEGRAM_TOKEN"), request=request)
+sklad_re = re.compile(re.compile(r"\bсклад\b"), re.IGNORECASE)
 
 
 def add_order(text, date, username, title):
@@ -59,15 +60,15 @@ async def main():
         me = await bot.get_me()
         print("Бот підключено:", me.username)
         tag = f"@{me.username}".lower()
+        tag_re = re.compile(re.escape(tag), re.IGNORECASE)
         updates = await bot.get_updates(timeout=0)
         print("Нових оновлень:", len(updates))
 
         for update in updates:
             msg = update.message
-            if not msg or not msg.entities or not msg.text:
-                continue
-            for e in msg.entities:
-                if e.type == "mention" and msg.parse_entity(e).lower() == tag:
+            if not msg or not msg.text:                continue
+            if not tag_re.search(msg.text) or not sklad_re.search(msg.text):
+continue
                     ok = add_order(
                         remove_tag(msg.text, tag),
                         msg.date,
@@ -80,8 +81,7 @@ async def main():
                             f'Замовлення:\n\n {remove_tag(msg.text,tag)}\n\nБуде доставлене Максимом до {deadline.strftime("%d.%m")} включно'
                         )
                     else:
-                        await msg.reply_text("Не працює база, зверніться будь ласка до Максима")
-                    break
+                        await msg.reply_text("Не працює база, зверніться будь ласка до Максима")
 
         if updates:
             await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
