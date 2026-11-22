@@ -10,7 +10,7 @@ from telegram import Bot
 load_dotenv(".env")
 request = HTTPXRequest(connect_timeout=30, read_timeout=30)
 bot = Bot(token=os.getenv("TELEGRAM_TOKEN"), request=request)
-sklad_re = re.compile(r"\bсклад\b", re.IGNORECASE)
+sklad_re = re.compile(r"\bсклад\w*", re.IGNORECASE)
 
 
 def add_order(text, date, username, title):
@@ -88,6 +88,5 @@ async def main():
 
 
 asyncio.run(main())
-
 
 
