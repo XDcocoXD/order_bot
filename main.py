@@ -66,7 +66,7 @@ def get_stock():
     while True:
         body = {"page_size":100,
                 "filter": {"property": "Наявність", "checkbox": {"equals": True}},
-                "sorts": {"property": "Назва","direction": "asc"}}
+                "sorts": [{"property": "Назва","direction": "ascending"}]}
         if cursor:
             body["start_cursor"] = cursor
 
