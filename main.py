@@ -37,7 +37,7 @@ def add_order(text, date, username, title):
     return notion_post.status_code == 200
 
 
-chat_names = ["Константинівська", "Хорива", "Speak🅣🅘🅢🅗🅝🅐"]
+chat_names = ["Константинівська", "Хорива", "🅣🅘🅢🅗🅝🅐"]
 
 
 def find_title(title):
