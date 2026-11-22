@@ -2,6 +2,8 @@ import asyncio
 import os
 import re
 from datetime import timedelta
+
+import httpx
 from httpx import post
 from dotenv import load_dotenv
 from telegram.request import HTTPXRequest
@@ -11,6 +13,7 @@ load_dotenv(".env")
 request = HTTPXRequest(connect_timeout=30, read_timeout=30)
 bot = Bot(token=os.getenv("TELEGRAM_TOKEN"), request=request)
 sklad_re = re.compile(r"\bсклад\w*", re.IGNORECASE)
+stock_re = re.compile(r"\bнаявність\b", re.IGNORECASE)
 
 
 def add_order(text, date, username, title):
@@ -54,6 +57,37 @@ def remove_tag(text, tag):
     cleaned = re.sub(r"[ \t]+", " ", cleaned)
     return cleaned.strip()
 
+def text_of(parts):
+    return "".join(x["plain_text"] for x in parts)
+
+def get_stock():
+    rows =[]
+    cursor = None
+    while True:
+        body = {"page_size":100,
+                "filter": {"property": "Наявність", "checkbox": {"equals": True}}}
+        if cursor:
+            body["start_cursor"] = cursor
+
+        r = post(f"https://api.notion.com/v1/databases/{os.environ['NOTION_DATABASE1_ID']}/query",
+            headers={
+                "Authorization": f"Bearer {os.environ['NOTION_TOKEN']}",
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json",
+            },
+            json=body,
+            timeout=30)
+
+        data = r.json()
+        rows.extend(data["results"])
+        if not data["has_more"]:
+            break
+        cursor = data["next_cursor"]
+
+    return [text_of(row['properties']['Назва']['title']) for row in rows]
+
+
+
 
 async def main():
     async with bot:
@@ -67,26 +101,30 @@ async def main():
             msg = update.message
             if not msg or not msg.text:
                 continue
-            if not tag_re.search(msg.text) or not sklad_re.search(msg.text):
-                continue
-            ok = add_order(
+            if tag_re.search(msg.text) and sklad_re.search(msg.text):
+                ok = add_order(
                 remove_tag(msg.text, tag),
                 msg.date,
                 msg.from_user.username or msg.from_user.first_name,
                 find_title(msg.chat.title),
             )
-            if ok:
-                deadline = msg.date + timedelta(days=3)
-                await msg.reply_text(
+                if ok:
+                    deadline = msg.date + timedelta(days=3)
+                    await msg.reply_text(
                     f'Замовлення:\n\n {remove_tag(msg.text, tag)}\n\nБуде доставлене Максимом до {deadline.strftime("%d.%m")} включно'
                 )
-            else:
-                await msg.reply_text("Не працює база, зверніться будь ласка до Максима")
+                else:
+                    await msg.reply_text("Не працює база, зверніться будь ласка до Максима")
+
+            elif tag_re.search(msg.text) and stock_re.search(msg.text):
+                available = get_stock()
+                await msg.reply_text("\n".join(available) if available else "Щось пішло не так")
+
 
         if updates:
             await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
 
 
-asyncio.run(main())
 
+asyncio.run(main())
 
