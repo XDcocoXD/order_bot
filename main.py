@@ -119,7 +119,7 @@ async def main():
 
             elif tag_re.search(msg.text) and stock_re.search(msg.text):
                 available = get_stock()
-                await msg.reply_text("\n".join(available) if available else "Щось пішло не так")
+                await msg.reply_text("Ось все що є на складі:\n" + "\n".join(available) if available else "Щось пішло не так")
 
 
         if updates:
